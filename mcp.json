@@ -1,0 +1,13 @@
+{
+	"servers": {
+        "VaadinMCP": {
+            "type": "http",
+            "url": "https://mcp.vaadin.com/docs"
+        },
+		"Figma Dev Mode MCP": {
+       		"type": "http",
+       		"url": "http://127.0.0.1:3845/mcp"
+    	}
+	},
+	"inputs": []
+}
