@@ -35,14 +35,6 @@ Create TODOs based on these steps.
 - Button → `get_full_document("components/button/index-flow.md")`
 - etc.
 
-#### 3.3 Examine Java class directly
-- Use `semantic_search` to find the component Java file (e.g., "Button.java", "TextField.java")
-- Use `read_file` to examine the actual Java class implementation
-- Look for available constructors, methods, and theme variants
-- Check for interfaces like `HasLabel`, `HasValue`, `HasSize` to understand capabilities
-- Identify all available `addThemeVariants()` options
-- Review setter methods for proper configuration approaches
-
 #### 3.4 Implementation Planning
 - Document available theme variants
 - Note component-specific features
