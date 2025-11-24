@@ -167,6 +167,7 @@ When assigning Lumo Primary, Error, Warning, Success or Contrast colors. Ensure 
 
 ### Input field styling
 - If `--vaadin-input-field-border-color` is set, ensure `--vaadin-input-field-border-width` is also set at least 1px.
+- Use CSS variables for styling whenever possible. If writing custom styles of input fields do not target specific fields. Target `::part(input-field)`, `::part(label)` and `::part(value)` to keep styling of all inputs consistent.
 
 ### Component-Specific Variables (Direct Mapping + Vaadin MCP)
 Many component variables are directly available in Figma with exact CSS variable names:
@@ -188,7 +189,7 @@ Map Figma component tokens to variables:
 --vaadin-input-field-height: 2.25rem;
 --vaadin-input-field-background: hsla(218, 31%, 35%, 0.1);
 --vaadin-input-field-border-color: hsla(218, 31%, 20%, 0.52);
---vaadin-input-field-border-width: 0;
+--vaadin-input-field-border-width: 1px;
 
 /* User Colors */
 --vaadin-user-color-0: hsla(320, 87%, 46%, 1);
