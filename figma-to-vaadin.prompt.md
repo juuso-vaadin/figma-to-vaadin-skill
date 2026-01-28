@@ -14,28 +14,61 @@ Create TODOs based on these steps.
 - Identify theme/variant hints
 - Text styles and typography information (font size, weight, line height)
 
-### Step 2. Use `get_metadata` for Structure and identification of components
+### Step 2. Figma Component Instance Annotation Checker
+
+When you receive design context from Figma MCP that contains a component instance:
+
+1. **Detect component instances** by checking for node IDs in the format `I[instance-id];[master-component-id]` (e.g., `I1:6;1:3`)
+
+2. **Check instance annotations FIRST** - Examine the component instance for annotations that provide specific implementation guidance.
+
+3. **Extract the master component ID** from the instance node ID:
+   - Split on semicolon `;`
+   - Take the second part as the master component node ID
+
+4. **Fetch the master component** using the master component ID
+
+5. **Check master component annotations** - These provide default/fallback guidance:
+   - Accessibility requirements
+   - Recommended Vaadin components
+   - Implementation notes
+   - Additional content or behavior details
+
+6. **Merge annotations with priority**:
+   - **Instance annotations override master component annotations** when both exist
+   - Instance-specific annotations are assumed to be more accurate and contextual
+   - Use master component annotations only when instance lacks specific guidance
+
+7. **Extract component documentation** from both responses:
+   - Component descriptions
+   - Documentation links
+   - Usage guidelines
+
+**Important**: Both instance and master component annotations are critical for accurate implementation. Always check both sources, giving priority to instance-level annotations for the most accurate implementation guidance.
+
+
+### Step 3. Use `get_metadata` for Structure and identification of components
 - Component `name` is the name of the layer and might not correspond to right Vaadin component.
 - Plan component hierarchy and relationships
 - Analyze node IDs and relationships
 - Identify layout patterns and nesting
 
-### Step 3: Component Research (MANDATORY - No Implementation Without This)
+### Step 4: Component Research (MANDATORY - No Implementation Without This)
 **For EACH component identified in Steps 1-2:**
 
-#### 3.1 Component Discovery
+#### 4.1 Component Discovery
 - Use `search_vaadin_docs` to find relevant components
 - Record `file_path` for each component found
 - Search results are previews only
 
-#### 3.2 Complete Documentation Review (MANDATORY)
+#### 4.2 Complete Documentation Review (MANDATORY)
 **For each component, call `get_full_document` with the file_path:** - REQUIRED before implementation
 - TextField → `get_full_document("components/text-field/index-flow.md")`
 - DatePicker → `get_full_document("components/date-picker/index-flow.md")`
 - Button → `get_full_document("components/button/index-flow.md")`
 - etc.
 
-#### 3.4 Implementation Planning
+#### 4.3 Implementation Planning
 - Document available theme variants
 - Note component-specific features
 - Identify any limitations or gaps
@@ -45,7 +78,7 @@ Create TODOs based on these steps.
 ❌ WORKFLOW VIOLATIONS = REJECTION
 ⚠️ Search results are previews only - not sufficient for implementation
 
-### Step 4: Implement user interface
+### Step 5: Implement user interface
 - Implement using proper Vaadin components and custom elements already available in the project, not generic HTML
 - Apply correct themes and variants
 - Ignore visual styling of elements
@@ -55,7 +88,7 @@ Create TODOs based on these steps.
 - Determine correct heading levels based on text styles
 - Accessibility attributes should be included where needed
 
-### Step 5: Don't run tests
+### Step 6: Don't run tests
 - Do not run any commands in terminal
 - Do not open browser or take screenshots
 
