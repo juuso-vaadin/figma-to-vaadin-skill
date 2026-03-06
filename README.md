@@ -1,11 +1,9 @@
-# AI Skills for Figma to Vaadin
+# Figma to Vaadin agent skills
 Collection of AI skills for translating Figma designs to Vaadin applications.
-
-## Skills Overview
 
 This repository contains two complementary skills that work with Figma MCP and Vaadin MCP to streamline the design-to-code workflow:
 
-### 1. Figma to Vaadin (Component Implementation)
+### 1. Figma to Vaadin (UI implementation)
 **Purpose:** Translate Figma designs to well-structured Vaadin Flow code
 
 **Use this skill when you need to:**
@@ -24,7 +22,7 @@ This repository contains two complementary skills that work with Figma MCP and V
 Implement the selection in Figma. Follow the provided guidelines.
 ```
 
-### 2. Figma to Lumo Theme (Design Tokens)
+### 2. Figma to Lumo Theme
 **Purpose:** Map Figma design tokens to Lumo CSS variables
 
 **Use this skill when you need to:**
