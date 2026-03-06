@@ -1,13 +1,30 @@
+---
+name: figma-to-lumo-theme
+description: Map Figma design tokens to Lumo CSS variables by extracting tokens, categorizing them, and generating CSS declarations in the styles.css file with only non-default values.
+---
+
 # Figma to Lumo CSS Variables Mapping Template
 
 ## Overview
-This template provides a systematic approach for mapping Figma design tokens to Lumo CSS variables using the `get_variable_defs` tool. The goal is to customize Lumo Style Properties in `frontend/themes/[app]/styles.css` to match the design system defined in Figma.
+This template provides a systematic approach for mapping Figma design tokens to Lumo CSS variables using the `get_variable_defs` tool. The goal is to customize Lumo Style Properties in your application's `styles.css` file to match the design system defined in Figma.
+
+## Styles.css Location by Vaadin Version
+
+**Vaadin 24:**
+- Path: `frontend/themes/[app]/styles.css`
+- Theme folder is active by default
+- Uses `@Theme` annotation on AppShellConfigurator
+
+**Vaadin 25:**
+- Path: `src/main/resources/META-INF/resources/styles.css`
+- Uses `@StyleSheet("styles.css")` annotation on AppShellConfigurator
+- The Vaadin 24 theme folder approach (`frontend/themes`) is deprecated but still supported using the `themeComponentStyles` feature flag
 
 ## Required Workflow for CSS Variable Mapping
 Create TODOs based on these steps.
 - Step 1: Extract Figma Design Tokens
 - Step 2: Categorize Design Tokens
-- Step 3: Extract Component Styles From Figma with `get_design_context`
+- Step 3: Extract Component Styles From Figma with `get_design_context` tool
 - Step 4. Review Component Styling Documentation
 - Step 5: Generate CSS Variable Declarations (Only Non-Default Values)
 

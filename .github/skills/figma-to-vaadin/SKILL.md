@@ -1,3 +1,8 @@
+---
+name: figma-to-vaadin
+description: Translate Figma designs to well-structured Vaadin Flow code using Figma MCP and Vaadin MCP. Always extract design context first, check annotations, review documentation, then implement proper Vaadin components with correct themes and semantic structure.
+---
+
 # Figma to Vaadin Implementation Guidelines
 
 ## Overview
@@ -7,7 +12,7 @@ This document provides comprehensive guidelines for accurately translating Figma
 ## Required Implementation Workflow
 Create TODOs based on these steps.
 
-### Step 1. ALWAYS Start with `get_design_context`
+### Step 1. ALWAYS Start with `get_design_context` tool
 - Contains the most detailed component information
 - Check `data-name` attribute to get the type of the component
 - Review component description for identification of correct Vaadin component
@@ -47,7 +52,7 @@ When you receive design context from Figma MCP that contains a component instanc
 **Important**: Both instance and master component annotations are critical for accurate implementation. Always check both sources, giving priority to instance-level annotations for the most accurate implementation guidance.
 
 
-### Step 3. Use `get_metadata` for Structure and identification of components
+### Step 3. Use `get_metadata` tool for Structure and identification of components
 - Component `name` is the name of the layer and might not correspond to right Vaadin component.
 - Plan component hierarchy and relationships
 - Analyze node IDs and relationships
@@ -57,12 +62,12 @@ When you receive design context from Figma MCP that contains a component instanc
 **For EACH component identified in Steps 1-2:**
 
 #### 4.1 Component Discovery
-- Use `search_vaadin_docs` to find relevant components
+- Use `search_vaadin_docs` tool to find relevant components
 - Record `file_path` for each component found
 - Search results are previews only
 
 #### 4.2 Complete Documentation Review (MANDATORY)
-**For each component, call `get_full_document` with the file_path:** - REQUIRED before implementation
+**For each component, call `get_full_document` tool with the file_path:** - REQUIRED before implementation
 - TextField → `get_full_document("components/text-field/index-flow.md")`
 - DatePicker → `get_full_document("components/date-picker/index-flow.md")`
 - Button → `get_full_document("components/button/index-flow.md")`
