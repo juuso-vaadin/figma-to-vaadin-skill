@@ -49,16 +49,23 @@ Apply the Figma design tokens to Lumo theme. Follow the provided guidelines.
 - Connection to Figma MCP and Vaadin MCP servers
 
 ### Setup
-The skill definitions in `.github/skills/` are designed for GitHub Copilot in VS Code, but can easily be adapted for other AI coding assistants like Claude Code or other tooling that supports custom instructions and MCP.
+The agent skill definitions are found in `skills/`. The skill structure is generic, but different tools may load the skills slightly differently.
 
-Sample configuration files for VS Code are provided in the `.vscode` directory.
+Figma MCP can be used **remotely** (link to Figma file) or **locally** (Figma Desktop app). Remove one or the other from the `mcp.json` file before using the skills.
+Project contains a sample MCP server configuration file for VS Code in the `.vscode` directory.
 
 ### Usage
-1. Make a selection in Figma. (Figma MCP only supports a single frame selection).
-2. In your code editor, use the appropriate slash command in the AI chat:
+1. Make a selection in Figma.
+2. Right click to see context menu and select "Copy link to selection". Alternatively you can copy the URL with node ID from browser's address bar.
+3. In your code editor, use the appropriate slash command in the AI chat and paste the URL pointing to a Figma node:
    - `/figma-to-vaadin` for UI code implementation
    - `/figma-to-lumo-theme` for configuring Lumo theme
-3. The AI will follow the skill guidelines to generate accurate code or styles
+4. The AI agent will follow the skill guidelines to generate accurate code or styles.
+
+#### Example prompt
+```
+/figma-to-vaadin Create new view based on https://www.figma.com/design/ExAMpLeID/My-Figma-File?node-id=1-234&t=DABCINP9G1B1d8Wi-1
+```
 
 ## Technical Details
 

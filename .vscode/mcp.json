@@ -1,10 +1,14 @@
 {
 	"servers": {
-        "VaadinMCP": {
+        "Vaadin MCP": {
             "type": "http",
             "url": "https://mcp.vaadin.com/docs"
         },
-		"Figma Dev Mode MCP": {
+		"Figma MCP remote": {
+       		"type": "http",
+       		"url": "https://mcp.figma.com/mcp"
+    	},
+		"Figma MCP desktop": {
        		"type": "http",
        		"url": "http://127.0.0.1:3845/mcp"
     	}
