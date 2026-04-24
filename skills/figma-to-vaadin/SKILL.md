@@ -208,7 +208,7 @@ Span label = new Span("Label");
 VerticalLayout.add(label, input);
 
 // Proper way to set border
-layout.addClassNames("LumoUtility.Border.TOP", "LumoUtility.BorderColor.CONTRAST_10");
+layout.addClassNames(LumoUtility.Border.TOP, LumoUtility.BorderColor.CONTRAST_10);
 
 // ❌ INCORRECT way to set border
 layout.getStyle().set("border-top", "1px solid var(--lumo-contrast-10pct)");
