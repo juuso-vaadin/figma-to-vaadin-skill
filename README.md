@@ -1,3 +1,6 @@
+<img width="900" height="180" alt="code_gen_banner" src="https://github.com/user-attachments/assets/5256577f-4651-4e8f-8f69-4d0c5eee922f" />
+
+
 # Figma to Vaadin agent skills
 Collection of AI skills for translating Figma designs to Vaadin applications.
 
