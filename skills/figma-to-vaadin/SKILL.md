@@ -1,193 +1,124 @@
 ---
 name: figma-to-vaadin
 description: >
-  Translate Figma designs into Vaadin Flow (Java) UI code using the Figma MCP and Vaadin MCP.
-  Use this skill whenever the user wants to implement a Figma frame, screen, or component as
-  Vaadin Java code — even if they just say "implement this design", "generate Vaadin code from
-  Figma", "convert this frame to Java", or paste a Figma URL. Does NOT apply to React, HTML,
-  web components, or other frontend frameworks — only Vaadin Flow (Java). Does NOT apply to
-  design-only tasks such as editing Figma files or generating Figma components. Does NOT
-  configure themes or visual design tokens — that is a separate skill.
+  Translate Figma designs into Vaadin Flow (Java) UI code. Use this skill whenever the user wants
+  to implement a Figma frame, screen, or component as Vaadin Java code — even if they just say
+  "implement this design", "generate Vaadin code from Figma", "convert this frame to Java", or
+  paste a Figma URL. Does NOT apply to React, HTML, web components, or other frontend frameworks
+  — only Vaadin Flow (Java). Does NOT apply to design-only tasks such as editing Figma files or
+  generating Figma components. Does NOT configure themes or visual design tokens — that is a
+  separate skill.
 compatibility: Requires a Figma MCP server and the Vaadin MCP server
 ---
 
-# Figma to Vaadin Implementation
+# Figma to Vaadin: the Vaadin-specific half
 
-## Scope
+## What this skill does and does not own
 
-This skill produces Vaadin Flow (Java) code that reproduces the **layout and component
-structure** of a Figma design. It does not configure global theme tokens, brand colors, or
-typography — that belongs to a separate theme configuration skill.
+The Figma side already has a skill: `figma-design-to-code`, which the Figma MCP requires you to
+load before calling `get_design_context`. It owns fetching design context, treating the returned
+code as a reference rather than final, the hint priority order (Code Connect → component docs →
+annotations → design tokens → raw values), reusing what the project has, and asset fidelity.
+**Follow it, and don't restate it here.**
 
-The main failure mode this skill guards against is jumping straight to code from a guess.
-Gather enough context — the design, its annotations, and the real Vaadin API — before writing
-anything.
+This skill adds only what that skill cannot know: how Vaadin behaves, and how to find out what
+*this* project does. It assumes nothing about the design either — a Figma file may be built from
+a Vaadin library, may reference Lumo or another theme, or may have no relationship to Vaadin at
+all. All are in scope; the difference is only how much you can take directly and how much you
+must translate.
+
+## Learn the project before you write
+
+Nothing here should be assumed — read it out of the project each time.
+
+- **Vaadin version** — from the build file (`pom.xml` / `build.gradle`). Pass it to **every**
+  Vaadin MCP call: APIs, variants and feature flags differ between versions, and the newest
+  version's docs will quietly mislead you on an older project.
+- **The app's theme** — Lumo, Aura, or custom. Decides which variant constants exist, what the
+  default component styling is, and which CSS custom properties are real.
+- **An existing view** — tells you the base class views extend, the shared header/footer
+  wrappers, how CSS classes are named and where rules live.
+- **What the app shell already provides** — a design screenshot shows the whole application, but
+  navigation and chrome usually belong to the shell. Build only the content region;
+  re-implementing the navigation renders it twice.
+- **The icon set and the data source** — projects often add their own icon set, and existing
+  records beat a parallel data model invented to fit the design.
+
+**Code style, architecture and conventions come from the project's own guidelines** — a
+`CLAUDE.md` or equivalent. This skill does not restate them: how to structure a view, when to
+split out reusable components, how to name things and how to shape sample data are decisions the
+project already makes. Read them there and follow them; everything here is about getting from a
+Figma design to correct Vaadin, not about how this project writes Java.
+
+## The source is authoritative; the docs are for usage
+
+Never answer a Vaadin question from memory — APIs, variants, custom properties and feature flags
+all move between versions.
+
+**For what exists, the project's own Vaadin jars are ground truth.** They are the version the
+project actually compiles against, and they cannot be out of date or subtly wrong about an older
+release. Settle any question of the form *does this method/constant/overload exist* against them:
+`javap` on the classpath for a signature or an enum's constants, or a three-line `javac` probe
+for anything involving generics or overload resolution.
+
+**Never repair a compile error by guessing a nearby method name.** Plausible-sounding methods
+that don't exist are a recurring failure — a boolean-only setter that looks like it also takes a
+CSS string, a sizing method that exists on components but not on a grid column. A probe settles
+in seconds what reasoning gets wrong confidently.
+
+**For what things mean, use the Vaadin MCP.** Source tells you a variant constant exists; it
+does not tell you what that variant does to the rendering, which is the question you usually
+have.
+
+- `get_component_styling` — **before writing any CSS for a component.** What the component
+  already does is the input to half the rules in `references/components.md`.
+- `get_theme_css_properties` — before using a custom property. **Never invent a property name**:
+  a `var(--made-up, fallback)` silently becomes a permanent hard-coded value that never tracks
+  the theme.
+- `search_vaadin_docs` → `get_full_document` — to find a component when you don't know which
+  fits, for intended usage, and for worked examples. Search results are previews; read the
+  document before relying on one.
+- `get_component_java_api` — a faster read than `javap` when you want the shape of a component's
+  API rather than a yes/no on one signature.
+
+**Feature-flag status changes between versions too.** Some components sit behind a flag in one
+version and ship enabled in the next — check rather than recalling, and if a component needs a
+flag the project hasn't set, say so instead of silently choosing something else.
 
 ## Workflow
 
-Create TODOs from these steps and follow them in order.
+1. **Load `figma-design-to-code` and decompose the frame up front.** Full-screen frames truncate,
+   and `get_design_context` can return an incomplete answer without saying so. Get the region
+   tree first, then request context **per region**. Don't discover truncation late and fall back
+   to metadata alone — that carries geometry with **no styling at all**, so the implementation
+   silently degrades to boxes in roughly the right places.
+2. **Measure each region before writing Java** — nesting, padding, gap, border, size, component
+   type. → `references/fidelity.md`
+3. **Lay out with the layout API**, not CSS. → `references/layout.md`
+4. **Choose and style components** against what they already do. → `references/components.md`
+5. **Close the loop** — check the emitted code back against the measurements, then compile.
+   → `references/fidelity.md`
+6. **Hand off verification.** Writing the code is this skill's job; confirming it against the
+   design is not. If the project has a visual-verification skill, invoke it with the Figma
+   reference and the route, and present its findings rather than acting on them unprompted. Agree
+   with the user first whether you should also apply a round of fixes.
 
-### 1. Fetch design context
+## The rules that decide the outcome
 
-`get_design_context` on the given node is the primary source — it has the most detailed
-component information; check `data-name` for component type, and note theme/variant hints and
-text styles. If the response is truncated (very large or deeply nested frames), fall back to
-`get_metadata` for the layer hierarchy, then call `get_design_context` on the specific child
-nodes you need.
+Read the reference for the step you are on. These are the ones that most often decide whether the
+result is right, and they are short enough to carry with you:
 
-### 2. Check component annotations
-
-For each component instance, apply these in order: recommended Vaadin component, theme
-variants, accessibility requirements, implementation notes, documentation links. Annotations
-override guesses from layer names.
-
-If a Figma component still doesn't map clearly to one Vaadin component after checking
-annotations, ask: "Should this be a [ComponentA] or [ComponentB]? The Figma shows
-[description]." Don't guess.
-
-### 3. Research each component (mandatory)
-
-Never rely on memorized Vaadin knowledge — API surfaces and feature-flag status change between
-versions.
-
-- `search_vaadin_docs` to find candidates, record `file_path`
-- `get_full_document` for **every** component before implementing — search results are
-  previews, not enough on their own
-- `get_component_java_api` for the exact Java method signatures — use this whenever you
-  need to know which methods a component exposes (slot setters, theme variants, sizing)
-
-If a compile error suggests a method doesn't exist, re-read the component's Java API docs
-before guessing at a fix. Don't search local `.m2` jars for source, and don't run anything to
-"just try it" — the docs are the authoritative source.
-
-### 4. Resolve project preferences, once
-
-Before implementing, resolve the preferences below. Check `.agent-context` in the project root
-first — if a value is already recorded, use it and don't ask again. For anything unresolved,
-ask the user (ideally in one combined question), then append all the answers to
-`.agent-context` so future runs don't ask again:
-
-```
-layout-approach: vaadin-css
-architecture: single-view
-sample-data: generate-sample
-verification: skip
-```
-
-| Preference | Values | Auto-detect | Otherwise |
-|---|---|---|---|
-| `layout-approach` | `lumo-utility` / `vaadin-css` / `tailwind` | App class has both `@StyleSheet(Lumo.STYLESHEET)` and `@StyleSheet(Lumo.UTILITY_STYLESHEET)` → `lumo-utility`. `vaadin-featureflags.properties` has `com.vaadin.experimental.tailwindCss=true` → `tailwind`. Aura-themed apps have no equivalent signal — ask. | "Which layout approach should I use — Vaadin layout APIs + plain CSS (always works, no setup), Lumo Utility classes (requires `@StyleSheet(Lumo.UTILITY_STYLESHEET)`), or Tailwind (only if already configured)?" |
-| `architecture` | `single-view` / `composed-components` | No reliable signal | "Should I build this as one view class with private helper methods, or split it into reusable components (e.g. a separate detail/edit form that fires its own save/cancel events)?" |
-| `sample-data` | `generate-sample` / `use-existing-data` | Check whether the project already has a repository, service, or entity matching the data shown in the design | "Should I generate small sample data for this view, or is there existing data/service in the project I should wire it to instead?" |
-| `verification` | `skip` / `verify` / `verify-and-fix` | No reliable signal | "After implementing, should I skip testing, run visual verification against the Figma design, or run visual verification and automatically apply one round of fixes based on the findings?" |
-
-Read the matching layout reference before writing any layout code:
-`lumo-utility` → `references/layouts-lumo-utility.md`
-`vaadin-css` → `references/layouts-vaadin-css.md`
-`tailwind` → `references/layouts-tailwind.md`
-
-### 5. Implement
-
-- Use Vaadin components, not generic HTML; prefer the component API over the element/style API
-  (e.g. `textField.setReadOnly(true)`, not `.getElement().setAttribute("readonly", "")`)
-- Apply theme variants via Java API (`addThemeVariants`)
-- Use the layout patterns from the chosen reference
-- Pick correct heading levels from text styles
-- Add accessibility attributes where needed (e.g. `setAriaLabel` on icon-only buttons)
-
-If `architecture: composed-components` — split the view into a container plus reusable
-sub-components (e.g. a details/edit form as its own class). Sub-components fire custom
-`ComponentEvent`s (e.g. `SaveEvent`, `CancelEvent`) that the container listens for and acts on,
-rather than the container reaching into the sub-component's fields directly.
-
-If `sample-data: generate-sample`:
-- Define it in a `private` helper method (e.g. `createSampleOrders()`)
-- 3–5 items max, or enough to match what the design visually shows (e.g. a scrolling grid) if
-  that density is core to the layout
-- Realistic values (`"Alice Johnson"`, not `"Item 1"`)
-- Add `// Sample data — replace with real service call` comment
-- Prefer `List.of(...)` for immutable collections
-
-If `sample-data: use-existing-data`, wire the view to the existing repository/service/entity
-instead of inventing new sample data.
-
-### 6. Test
-
-This skill's own job — writing code — is done by the end of Step 5. Don't run terminal
-commands, open a browser, or take screenshots yourself; what happens next depends on the
-`verification` preference resolved in Step 4:
-
-- **`skip`** — stop here.
-- **`verify`** — invoke the `vaadin-visual-verification` skill, passing it the Figma URL (or
-  `fileKey`/`nodeId`) used for this view and the route it was implemented at. Present its
-  prioritized findings to the user as-is; don't act on them yet.
-- **`verify-and-fix`** — invoke `vaadin-visual-verification` the same way, then apply exactly
-  **one** round of fixes addressing its findings, highest severity first. Tell the user what was
-  changed and why. Don't loop back into a second verification pass automatically — if the user
-  wants to confirm the fixes, that's a new verification run.
-
-## Universal component patterns
-
-These apply regardless of the styling approach.
-
-```java
-// ✅ Component API over element/style API
-textField.setReadOnly(true);
-button.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-avatar.addThemeVariants(AvatarVariant.LUMO_LARGE);
-iconButton.setAriaLabel("Close");
-input.setLabel("Label");                      // HasLabel API, not a separate Span
-
-// ✅ Sizing via component API
-layout.setSizeFull();
-layout.setWidth("600px");
-
-// ❌ Never use the style API for things the component API handles
-textField.getElement().setAttribute("readonly", "");
-button.getElement().getStyle().set("background", "transparent");
-layout.getStyle().set("width", "600px");
-avatar.getStyle().set("--vaadin-avatar-size", "48px");
-```
-
-## Gotchas
-
-`VerticalLayout` defaults:
-- Padding ON — call `setPadding(false)` if not wanted
-- Width 100% of parent
-- `alignItems` START — children do not stretch horizontally; call `setAlignItems(STRETCH)` or `setWidthFull()` per child to fill the width
-- `justifyContentMode` controls the vertical (main) axis
-
-`HorizontalLayout` defaults:
-- Padding OFF
-- Width shrinks to content — call `setWidthFull()` if it should fill the parent
-- `alignItems` STRETCH — children stretch vertically to fill the layout height (a `Button` next to a `TextField` will silently grow)
-- `justifyContentMode` controls the horizontal (main) axis
-- A layout child's minimum size defaults to its content size; this causes unexpected scrollbars in `Scroller` / `TabSheet`; fix with `component.setMinWidth("0")` or `setMinHeight("0")`
-
-- For purely visual containers prefer `FlexLayout` — it avoids all of the above defaults
-- `flex-shrink` is on by default — a fixed-size child shrinks when placed next to a `setWidthFull()` sibling; call `layout.setFlexShrink(component, 0)` to prevent it, or use `layout.setFlexGrow(fullSizeComponent, 1)` instead of `setWidthFull()` to avoid the conflict altogether
-- `setWidthFull()` on a child in a content-hugging `HorizontalLayout` expands the layout rather than fitting it; use `setAlignItems(STRETCH)` instead
-- A layout child's minimum size defaults to its content size; this causes unexpected scrollbars in `Scroller` / `TabSheet`; fix with `component.setMinWidth("0")` or `setMinHeight("0")`. The same default also applies one level up: a component like `MasterDetailLayout` or `Scroller` placed as the `expand()`ed child of a `VerticalLayout` (or a CSS Grid area) can resist shrinking below its content's natural height even with `setSizeFull()`. If a view overflows the page instead of scrolling internally, add `setMinHeight("0")` to that expanded child itself, not just to a `Scroller` nested further inside it
-- `RadioButtonGroup` / `CheckboxGroup` default orientation is theme-dependent: horizontal in Lumo, **vertical in Aura**. If the Figma layer is named/laid out horizontally and the project uses Aura, add `addThemeVariants(RadioGroupVariant.AURA_HORIZONTAL)` / `CheckboxGroupVariant.AURA_HORIZONTAL` — otherwise the group silently renders as a vertical stack
-- Feature-flag status changes between versions — don't assume a component needs one from memory; check `search_vaadin_docs("feature flags")` then `get_full_document` on the result
-- Never use CSS `margin` to space out a Vaadin layout component from its container — margin sits outside the component's measured box, which breaks `setSizeFull()`/`expand()` height math (a component can measure "correct" while still visually overflowing its parent). Add spacing instead via padding on a wrapping layout, or by targeting the component's own shadow-DOM part with `::part(...)` (e.g. `vaadin-master-detail-layout::part(detail) { padding: ...; }`)
-- When writing custom CSS, use real theme CSS custom properties — look them up with the Vaadin MCP (`get_theme_css_properties`) rather than inventing a plausible-sounding variable name with a hardcoded `var(--name, fallback)` fallback. If the name doesn't actually exist, the fallback silently becomes the real value and never tracks the theme (e.g. `var(--vaadin-background-color-secondary, #f9fafb)` — that property doesn't exist; the real one is `--vaadin-background-container`)
-- `VerticalLayout`/`HorizontalLayout`/`FlexLayout` already set `box-sizing: border-box` themselves, so padding on them is safe by default. Only plain elements — a custom CSS rule targeting a `Div`, another non-layout component, or a shadow-DOM `::part(...)` — need `box-sizing: border-box` added explicitly when the rule also sets `padding`; without it, padding adds to the element's declared width/height instead of being carved out of it, so a component sized with `setWidth()`/`setSizeFull()` ends up visually larger than intended
-
-## Quick reference: Figma → Vaadin
-
-| Figma | Vaadin |
-|---|---|
-| Vertical auto layout | `VerticalLayout` |
-| Horizontal auto layout | `HorizontalLayout` |
-| Free / absolute layout | `FlexLayout` |
-| Form / labelled fields | `FormLayout` |
-| Master-detail | `MasterDetailLayout` |
-| Button | `Button` |
-| Text Field | `TextField` |
-| Grid / Table | `Grid` |
-| Avatar | `Avatar` |
-| Card | `Card` (v24.8+) |
-| Badge / status label | `Badge` |
-| Text layer | `com.vaadin.flow.component.html.Span` |
-| Heading 3 | `com.vaadin.flow.component.html.H3` |
+- **The layout API comes before CSS.** `HorizontalLayout` and `VerticalLayout` *are* flexbox.
+  Translating Figma's flexbox into `Div`s with `display: flex` feels faithful and is the most
+  common structural defect.
+- **Absence of a declaration is not neutral — it inherits the component default.** Restate no
+  default; override every one the design contradicts.
+- **Borders are the most-missed property in the design.** A 1px line is invisible in a screenshot,
+  so nothing downstream will catch a missing one.
+- **Implement what the design contains and nothing else.** An empty or underspecified region is a
+  question for the user, not a blank to fill. Writing the guess down does not license shipping it.
+- **The design names a specific icon.** If it isn't available in the project, ask — never
+  substitute a different one, and never silently omit it.
+- **Don't trust layer names.** Figma names drift from content. Take component type from
+  `data-name` and annotations, and the view's identity from its visible heading text. If a
+  component still doesn't map to one Vaadin component, ask rather than guess.
