@@ -13,6 +13,61 @@ compatibility: Requires a Figma MCP server and the Vaadin MCP server
 
 # Figma to Vaadin: the Vaadin-specific half
 
+## The process — follow it in order
+
+**This skill is four documents.** This file is the spine; the three references carry the detail
+that decides whether the output matches the design. Work the steps in order, and **open the
+document a step names before doing that step's work.** The one-line summaries below are pointers
+to those documents, not replacements for them.
+
+**1. Learn the project.** Nothing about it should be assumed — read it out of the project each
+time:
+
+- **Vaadin version** — from the build file (`pom.xml` / `build.gradle`). Pass it to **every**
+  Vaadin MCP call, so you get the API surface this project actually compiles against.
+- **The app's theme** — Lumo, Aura, or custom. Decides which variant constants apply, the
+  default component styling, and which CSS custom properties are available.
+- **An existing view** — shows the base class views extend, the shared header/footer wrappers,
+  how CSS classes are named and where rules live.
+- **What the app shell already provides** — a design screenshot shows the whole application, but
+  navigation and chrome usually belong to the shell. Build only the content region;
+  re-implementing the navigation renders it twice.
+- **The icon set and the data source** — projects often add their own icon set, and existing
+  records beat a parallel data model invented to fit the design.
+
+Code style, architecture and conventions come from the project's own guidelines — a `CLAUDE.md`
+or equivalent. This skill does not restate them: how to structure a view, when to split out
+reusable components, how to name things and how to shape sample data are decisions the project
+already makes. Read them there and follow them.
+
+**2. Load `figma-design-to-code`, then decompose the frame up front.** Full-screen frames
+truncate, and `get_design_context` can return an incomplete answer without saying so. Get the
+region tree first, then request context **per region**. Don't discover truncation late and fall
+back to metadata alone — that carries geometry with no styling, so the implementation degrades to
+boxes in roughly the right places.
+
+**3. Measure the design — read `references/fidelity.md` first.** It sets out which properties to
+take from the returned code and which from the screenshot, and which details are easiest to lose
+on the way to Java. Record the view's own background and foreground first, then per region:
+nesting, padding, gap, border, size, component type.
+
+**4. Build the layout — read `references/layout.md` first.** It has the layout API surface in
+full, so the design's flexbox maps onto Vaadin's layout components rather than hand-written CSS,
+together with what genuinely belongs in CSS and the sizing defaults worth setting explicitly.
+
+**5. Choose and style components — read `references/components.md` first.** It covers how the
+components behave out of the box — Grid column sizing, card semantics, theme variants, icons — so
+what you write complements a component's own styling rather than duplicating or overriding it.
+
+**6. Close the loop — read the last section of `references/fidelity.md` again.** Check the
+emitted code back against your measurements in all three directions it describes, then compile.
+Compilation is the cheapest objective check available.
+
+**7. Hand off verification.** Writing the code is this skill's job; confirming it against the
+design is not. If the project has a visual-verification skill, invoke it with the Figma reference
+and the route, and present its findings rather than acting on them unprompted. Agree with the
+user first whether you should also apply a round of fixes.
+
 ## What this skill does and does not own
 
 The Figma side already has a skill: `figma-design-to-code`, which the Figma MCP requires you to
@@ -27,48 +82,22 @@ a Vaadin library, may reference Lumo or another theme, or may have no relationsh
 all. All are in scope; the difference is only how much you can take directly and how much you
 must translate.
 
-## Learn the project before you write
-
-Nothing here should be assumed — read it out of the project each time.
-
-- **Vaadin version** — from the build file (`pom.xml` / `build.gradle`). Pass it to **every**
-  Vaadin MCP call: APIs, variants and feature flags differ between versions, and the newest
-  version's docs will quietly mislead you on an older project.
-- **The app's theme** — Lumo, Aura, or custom. Decides which variant constants exist, what the
-  default component styling is, and which CSS custom properties are real.
-- **An existing view** — tells you the base class views extend, the shared header/footer
-  wrappers, how CSS classes are named and where rules live.
-- **What the app shell already provides** — a design screenshot shows the whole application, but
-  navigation and chrome usually belong to the shell. Build only the content region;
-  re-implementing the navigation renders it twice.
-- **The icon set and the data source** — projects often add their own icon set, and existing
-  records beat a parallel data model invented to fit the design.
-
-**Code style, architecture and conventions come from the project's own guidelines** — a
-`CLAUDE.md` or equivalent. This skill does not restate them: how to structure a view, when to
-split out reusable components, how to name things and how to shape sample data are decisions the
-project already makes. Read them there and follow them; everything here is about getting from a
-Figma design to correct Vaadin, not about how this project writes Java.
-
 ## The source is authoritative; the docs are for usage
 
 Never answer a Vaadin question from memory — APIs, variants, custom properties and feature flags
-all move between versions.
+evolve between versions.
 
 **For what exists, the project's own Vaadin jars are ground truth.** They are the version the
-project actually compiles against, and they cannot be out of date or subtly wrong about an older
-release. Settle any question of the form *does this method/constant/overload exist* against them:
-`javap` on the classpath for a signature or an enum's constants, or a three-line `javac` probe
-for anything involving generics or overload resolution.
+project compiles against. Settle any question of the form *does this method/constant/overload
+exist* against them: `javap` on the classpath for a signature or an enum's constants, or a
+three-line `javac` probe for anything involving generics or overload resolution.
 
-**Never repair a compile error by guessing a nearby method name.** Plausible-sounding methods
-that don't exist are a recurring failure — a boolean-only setter that looks like it also takes a
-CSS string, a sizing method that exists on components but not on a grid column. A probe settles
-in seconds what reasoning gets wrong confidently.
+**Never repair a compile error by guessing a nearby method name.** A probe settles in seconds
+what reasoning gets wrong confidently — for instance whether a setter takes a boolean or a CSS
+string, or whether a sizing method lives on the component or on a grid column.
 
-**For what things mean, use the Vaadin MCP.** Source tells you a variant constant exists; it
-does not tell you what that variant does to the rendering, which is the question you usually
-have.
+**For what things mean, use the Vaadin MCP.** Source tells you a variant constant exists; the
+docs tell you what it does to the rendering, which is usually the question you have.
 
 - `get_component_styling` — **before writing any CSS for a component.** What the component
   already does is the input to half the rules in `references/components.md`.
@@ -85,28 +114,11 @@ have.
 version and ship enabled in the next — check rather than recalling, and if a component needs a
 flag the project hasn't set, say so instead of silently choosing something else.
 
-## Workflow
-
-1. **Load `figma-design-to-code` and decompose the frame up front.** Full-screen frames truncate,
-   and `get_design_context` can return an incomplete answer without saying so. Get the region
-   tree first, then request context **per region**. Don't discover truncation late and fall back
-   to metadata alone — that carries geometry with **no styling at all**, so the implementation
-   silently degrades to boxes in roughly the right places.
-2. **Measure each region before writing Java** — nesting, padding, gap, border, size, component
-   type. → `references/fidelity.md`
-3. **Lay out with the layout API**, not CSS. → `references/layout.md`
-4. **Choose and style components** against what they already do. → `references/components.md`
-5. **Close the loop** — check the emitted code back against the measurements, then compile.
-   → `references/fidelity.md`
-6. **Hand off verification.** Writing the code is this skill's job; confirming it against the
-   design is not. If the project has a visual-verification skill, invoke it with the Figma
-   reference and the route, and present its findings rather than acting on them unprompted. Agree
-   with the user first whether you should also apply a round of fixes.
-
 ## The rules that decide the outcome
 
-Read the reference for the step you are on. These are the ones that most often decide whether the
-result is right, and they are short enough to carry with you:
+**A floor, not a summary — this list does not replace the three documents.** These are the rules
+that most often decide whether the result is right, kept here so they survive even if everything
+else is forgotten:
 
 - **The layout API comes before CSS.** `HorizontalLayout` and `VerticalLayout` *are* flexbox.
   Translating Figma's flexbox into `Div`s with `display: flex` feels faithful and is the most

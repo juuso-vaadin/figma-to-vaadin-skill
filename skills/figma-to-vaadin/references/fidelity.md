@@ -1,5 +1,7 @@
 # Fidelity: measuring the design, and checking what you emitted
 
+*Required reading for steps 2 and 5 of `SKILL.md`. Measuring the design, then checking what you emitted.*
+
 Two passes over the same list: once before writing Java, once before finishing.
 
 ## What to trust for which property

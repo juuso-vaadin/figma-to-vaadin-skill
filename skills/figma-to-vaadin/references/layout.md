@@ -1,5 +1,7 @@
 # Layout: the Java API before CSS
 
+*Required reading for step 3 of `SKILL.md`, before you write any layout code.*
+
 **This skill uses Vaadin's layout APIs plus plain CSS.** That combination works in every Vaadin
 project regardless of theme or setup, which utility-class approaches do not — `LumoUtility`
 exists only for Lumo. If a project has its own utility or Tailwind convention, follow the

@@ -1,5 +1,7 @@
 # Choosing and styling components
 
+*Required reading for step 4 of `SKILL.md`, before you choose or style any component.*
+
 Call `get_component_styling` before writing **any** CSS for a component, and
 `get_component_java_api` before assuming a method exists. What the component already does is the
 input to most of what follows.
@@ -38,10 +40,10 @@ the wrapper does not necessarily propagate inward, and **an internal `::part()` 
 container**, so `flex: 1` on a child can be silently inert. Check the component's styling before
 writing CSS that depends on its internal structure.
 
-**Grid columns: content-adaptive is not the default — you have to ask for it.** Unless told
-otherwise a Grid gives every column the *same* width and lets them share the available space, so
-emitting nothing produces evenly-spread columns, which is rarely what a design shows. Content-hugging
-widths come from `setAutoWidth(true)` together with `setFlexGrow(0)`.
+**Grid columns: pick the sizing mode deliberately.** By default a Grid gives every column the
+same width and lets them share the available space, which suits a table meant to fill its
+container. When the design shows columns sized to their content — the common case in a dense data
+view — ask for that with `setAutoWidth(true)` together with `setFlexGrow(0)`.
 
 So: make the columns hug their content, and set an explicit width only on a column the design
 *visibly* makes wider or narrower than its neighbours. What to avoid is hand-tuning a pixel width
