@@ -43,7 +43,7 @@ writing CSS that depends on its internal structure.
 **Grid columns: pick the sizing mode deliberately.** By default a Grid gives every column the
 same width and lets them share the available space, which suits a table meant to fill its
 container. When the design shows columns sized to their content — the common case in a dense data
-view — ask for that with `setAutoWidth(true)` together with `setFlexGrow(0)`.
+view — ask for that with `setAutoWidth(true)`.
 
 So: make the columns hug their content, and set an explicit width only on a column the design
 *visibly* makes wider or narrower than its neighbours. What to avoid is hand-tuning a pixel width

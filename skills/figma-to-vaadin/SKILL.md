@@ -82,23 +82,23 @@ a Vaadin library, may reference Lumo or another theme, or may have no relationsh
 all. All are in scope; the difference is only how much you can take directly and how much you
 must translate.
 
-## The source is authoritative; the docs are for usage
+## Verify against the docs, not from memory
 
-Never answer a Vaadin question from memory — APIs, variants, custom properties and feature flags
-evolve between versions.
+Vaadin's API surface, variants, custom properties and feature flags evolve between versions, so
+recall is the least reliable input available.
 
-**For what exists, the project's own Vaadin jars are ground truth.** They are the version the
-project compiles against. Settle any question of the form *does this method/constant/overload
-exist* against them: `javap` on the classpath for a signature or an enum's constants, or a
-three-line `javac` probe for anything involving generics or overload resolution.
+**Never go looking in `~/.m2`, and never extract, decompile or grep a dependency jar.** Everything
+those archives hold about a component's API is in the Vaadin documentation, one call away and
+already written for the version you ask about. Searching a local repository for it is slow, hard
+to read, easy to misread, and unnecessary.
 
-**Never repair a compile error by guessing a nearby method name.** A probe settles in seconds
-what reasoning gets wrong confidently — for instance whether a setter takes a boolean or a CSS
-string, or whether a sizing method lives on the component or on a grid column.
+Match the question to its source:
 
-**For what things mean, use the Vaadin MCP.** Source tells you a variant constant exists; the
-docs tell you what it does to the rendering, which is usually the question you have.
+**For anything about a Vaadin component — use the Vaadin MCP.** Pass the project's Vaadin version
+to every call.
 
+- `get_component_java_api` — a component's method signatures and variant constants. This is the
+  direct answer to "what does this component expose", and it replaces any need to inspect a jar.
 - `get_component_styling` — **before writing any CSS for a component.** What the component
   already does is the input to half the rules in `references/components.md`.
 - `get_theme_css_properties` — before using a custom property. **Never invent a property name**:
@@ -107,8 +107,19 @@ docs tell you what it does to the rendering, which is usually the question you h
 - `search_vaadin_docs` → `get_full_document` — to find a component when you don't know which
   fits, for intended usage, and for worked examples. Search results are previews; read the
   document before relying on one.
-- `get_component_java_api` — a faster read than `javap` when you want the shape of a component's
-  API rather than a yes/no on one signature.
+
+**For how this project does things — read the project's own code.** If a view already uses a
+component, that usage is a working example for exactly this version, and it also shows you the
+project's conventions. It answers questions the documentation cannot.
+
+**If, and only if, the documentation leaves one specific signature ambiguous**, a three-line
+`javac` probe against the project's build settles it: write the call, compile, read the answer.
+This is a yes/no check on something you already looked up — not a way to explore an API, and not
+a reason to go hunting for jars.
+
+**Never repair a compile error by guessing a nearby method name.** Look it up — for instance
+whether a setter takes a boolean or a CSS string, or whether a sizing method lives on the
+component or on a grid column.
 
 **Feature-flag status changes between versions too.** Some components sit behind a flag in one
 version and ship enabled in the next — check rather than recalling, and if a component needs a

@@ -19,6 +19,7 @@ express.
 | Vertical / horizontal stacking | `VerticalLayout` / `HorizontalLayout` |
 | Visual container without opinionated defaults | `FlexLayout` |
 | Spacing, padding | `setSpacing(...)`, `setPadding(...)` — check which overloads your version has |
+| Custom gap size (not just on/off) | `setSpacing(String)` / `setSpacing(float, Unit)` |
 | Wrap a row onto multiple lines | `setWrap(true)`, or `setFlexWrap(...)` on `FlexLayout` |
 | Cross-axis alignment | `setAlignItems(...)` |
 | Main-axis distribution | `setJustifyContentMode(...)` |
@@ -26,36 +27,34 @@ express.
 | Per-child alignment or basis | `setAlignSelf(...)`, `setFlexBasis(...)` |
 | Size and constraints | `setWidth`, `setHeight`, `setSizeFull`, `setMin/MaxWidth` |
 | Scrollable region | `Scroller` |
-| Responsive form columns | `FormLayout.setResponsiveSteps(...)` |
+| Responsive form columns | `FormLayout.setAutoResponsive(true)` — derives the column count from `setColumnWidth(...)` and the space available, so no breakpoints are written by hand |
 | Resizable split panels | `SplitLayout` |
 
-Confirm the exact overloads against the project's own jars — a setter that is boolean-only in one
-version may accept a CSS string in another, and assuming the wrong one is a compile error at best
-and a silent no-op at worst.
+Confirm the exact overloads with `get_component_java_api` for the project's version — a setter
+that is boolean-only in one version may accept a CSS string in another, and assuming the wrong one
+is a compile error at best and a silent no-op at worst.
 
 ## Responsiveness
 
-**Responsiveness comes from the layout API, not a media query.** A toolbar or KPI row that must
-reflow on narrow screens wants wrapping, not `flex-wrap` in CSS.
+**Responsiveness comes primarly from the layout API** and secondarily from a media query.
 
-Beyond what the layout API and responsive form steps give for free, responsive behaviour is
-**scope the design did not ask for** — a static frame specifies exactly one width. Check whether
+Beyond what the layout API and an auto-responsive `FormLayout` give for free, responsive behaviour is
+**not described in the design** — a static frame specifies exactly one width. Check whether
 the project already defines breakpoints or a responsive pattern and follow it; if it does not,
 **ask** rather than inventing a breakpoint scale. Adding one unasked is a guess the user has to
 review and probably undo.
 
 ## When CSS is the right answer
 
-The layout API genuinely cannot express these:
+The layout API cannot express these:
 
 | Need | CSS |
 |---|---|
 | 2-D grid (rows AND columns) | `display: grid; grid-template-columns: ...` |
-| Aspect ratio | `aspect-ratio: 16 / 9;` |
 | Sticky / absolute positioning | `position: sticky; top: 0;` |
 | Clip overflow without a scrollbar | `overflow: hidden;` |
 | Text truncation | `overflow: hidden; text-overflow: ellipsis; white-space: nowrap;` |
-| Card-like surface on a plain container | `background`, `border`, `border-radius`, `padding` |
+| Card-like surface on a plain container, content panel | `background`, `border`, `border-radius`, `padding` |
 
 ## Layout behaviour that causes silent bugs
 
