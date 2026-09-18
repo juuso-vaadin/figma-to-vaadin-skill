@@ -1,9 +1,9 @@
 ---
 name: figma-to-vaadin-orchestrator
 description: >
-  Build a Vaadin Flow UI from a Figma design in the right order — theme, then views, then visual
-  verification — by delegating to the project's theme skill (figma-to-aura-theme or
-  figma-to-lumo-theme), figma-to-vaadin and vaadin-visual-verification. This is the entry point
+  Build a Vaadin Flow UI from a Figma design in the right order — theme configuration, then UI
+  implementation, then verification — by delegating to the project's theme skill
+  (figma-to-aura-theme or figma-to-lumo-theme), figma-to-vaadin and vaadin-visual-verification. This is the entry point
   for all Figma-to-Vaadin work: use it whenever someone wants a Figma design implemented in
   Vaadin, and whenever they describe the work broadly ("implement this design", "build this
   screen", "turn this Figma file into an app", "set up the UI from our design system"). It runs
@@ -19,6 +19,17 @@ compatibility: Requires a Figma MCP server, the Vaadin MCP server, and the Playw
 This skill owns the order and the shared state. Technique lives in the skills it calls — follow
 them, don't restate them.
 
+Three phases, always in this order:
+
+| Phase | Name | Delegated to |
+|---|---|---|
+| 1 | Theme configuration | `figma-to-aura-theme` / `figma-to-lumo-theme` |
+| 2 | UI implementation | `figma-to-vaadin` |
+| 3 | Verification | `vaadin-visual-verification` |
+
+Use these names when reporting progress, so every phase is referred to the same way throughout
+the workflow.
+
 ## Customization order
 
 Match the design by configuring, in this order, stopping at the first level that reaches:
@@ -29,8 +40,8 @@ Match the design by configuring, in this order, stopping at the first level that
 
 ## Shared state: `.figma-to-vaadin/state.json`
 
-Create it in phase 1, update it as you go. Every delegated skill reads it, so it is the hand-off
-payload — pass its path on every invocation.
+Create it in phase 1 (theme configuration), update it as you go. Every delegated skill reads it,
+so it is the hand-off payload — pass its path on every invocation.
 
 The directory belongs to this workflow, not to any agent's configuration — create it at the
 project root if it isn't there, and keep the path fixed rather than looking for an agent-specific
@@ -57,7 +68,7 @@ share a `route`.
 Read it at the start of every run. Re-read the project too — developers edit theme and view code
 by hand, so where the two disagree the project wins and the manifest gets corrected.
 
-## Phase 1 — Theme
+## Phase 1 — Theme configuration
 
 **The Vaadin version decides first** — Aura does not exist before 25.0. Take it from `pom.xml` /
 `build.gradle`.
@@ -71,7 +82,7 @@ by hand, so where the two disagree the project wins and the manifest gets correc
 Record version and theme in the manifest.
 
 **Already configured?** If the manifest records a `theme` for this same `fileKey` and that file
-still exists, skip to phase 2.
+still exists, skip to phase 2 (UI implementation).
 
 Invoke the theme skill with the Figma **file**, not a node — it reads variables across the whole
 file.
@@ -86,10 +97,11 @@ Variables in the design file:
   developer's call.
 - **Conflicting across files** — ask which file defines the design system.
 
-Then build and start the app, confirm it serves at `appBaseUrl`, stop it, and begin phase 2. If
+Then build and start the app, confirm it serves at `appBaseUrl`, stop it, and begin phase 2 (UI
+implementation). If
 it does not build or start, report that and stop.
 
-## Phase 2 — The target
+## Phase 2 — UI implementation
 
 The user names one target node per run. If none was named, ask; don't pick one out of the file.
 
@@ -97,7 +109,7 @@ The user names one target node per run. If none was named, ask; don't pick one o
 2. Invoke `figma-to-vaadin` with the manifest path, that `nodeId` and that `route`.
 3. Set its `status` to `built`.
 
-`figma-to-vaadin` writes and compiles code. It does not verify — phase 3 does.
+`figma-to-vaadin` writes and compiles code. It does not verify — phase 3 (verification) does.
 
 ## Phase 3 — Verification
 
@@ -108,11 +120,12 @@ Route each finding to the phase that owns its fix:
 
 | The fix is | Route to |
 |---|---|
-| A theme property | Phase 1 |
-| A component variant, or view-scoped CSS | Phase 2 |
+| A theme property | Phase 1 — theme configuration |
+| A component variant, or view-scoped CSS | Phase 2 — UI implementation |
 | A deliberate trade-off | Neither — record it in the summary |
 
-Theme findings go into a **single** phase-1 revision, never one per finding. A theme change
+Theme findings go into a **single** phase-1 (theme configuration) revision, never one per
+finding. A theme change
 restyles every view, so after it, restart and re-verify every target already marked `verified`.
 
 Set `status` to `verified` once the target has no open findings.
@@ -124,13 +137,14 @@ developer's setup — never assume one, and never take a server responding at `a
 evidence it serves current code.
 
 Stop the app and start it again with `appStartCommand`, waiting for its startup line, after every
-phase that changed code and before anything reads the rendered app: end of phase 1, start of
-phase 3, and after every revision made in response to a finding.
+phase that changed code and before anything reads the rendered app: end of phase 1 (theme
+configuration), start of phase 3 (verification), and after every revision made in response to a
+finding.
 
 ## Output
 
-- **Theme** — skill used, file changed, properties set.
-- **Target** — name → route → source file.
+- **Theme configuration** — skill used, file changed, properties set.
+- **UI implementation** — target name → route → source file.
 - **Findings** — unresolved ones by severity, tagged with the phase that owns each.
 - **Deferred** — trade-offs accepted, and why.
 - **Open questions** — anything asked and still unanswered.

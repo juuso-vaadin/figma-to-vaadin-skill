@@ -3,8 +3,8 @@ name: vaadin-visual-verification
 description: >
   Visually verify a Vaadin Flow view against the Figma design it was implemented from, using
   the Playwright MCP server to render the running app and a Figma screenshot as the reference.
-  This is the final phase of the figma-to-vaadin-orchestrator workflow and is normally invoked
-  by it. Also use it on its own when the user asks to "verify against the design", "check it
+  This is phase 3 (verification), the final phase of the figma-to-vaadin-orchestrator workflow,
+  and is normally invoked by it. Also use it on its own when the user asks to "verify against the design", "check it
   matches Figma", or "visually verify the view". Produces a prioritized, actionable list of
   visual discrepancies — it does not fix them. Does NOT apply to backend/business-logic testing or
   general UI test suites — this is visual, design-fidelity verification only.
@@ -104,8 +104,9 @@ omitting the report.
 ## Boundaries
 
 - This skill only observes and reports — it does not edit code. Applying fixes belongs to the
-  caller: `figma-to-vaadin-orchestrator` routes each finding to the workflow phase that owns
-  its fix, batches theme changes into a single revision, and decides what gets re-verified.
+  caller: `figma-to-vaadin-orchestrator` routes each finding to the phase that owns its fix —
+  phase 1 (theme configuration) or phase 2 (UI implementation) — batches theme changes into a
+  single revision, and decides what gets re-verified.
   Report findings; don't fix them, and don't loop.
 - Don't rely on a single full-page screenshot alone — contrast and spacing issues are often
   only visible up close; take additional close-up screenshots of the specific regions where you

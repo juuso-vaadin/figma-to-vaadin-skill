@@ -2,9 +2,11 @@
 name: figma-to-lumo-theme
 description: >
   Map Figma design tokens to Lumo CSS variables by extracting tokens, categorizing them, and
-  generating CSS declarations in the styles.css file with only non-default values. Use this
-  skill whenever the user wants to apply Figma design tokens/colors/typography to a Vaadin
-  app's theme and the app uses the classic Lumo theme (`@StyleSheet(Lumo.STYLESHEET)`, no Aura
+  generating CSS declarations in the styles.css file with only non-default values. This skill is
+  phase 1 (theme configuration) of the figma-to-vaadin-orchestrator workflow, for projects on the
+  Lumo theme, and is normally invoked by it. Use it directly whenever the user wants to apply
+  Figma design tokens/colors/typography to a Vaadin app's theme and the app uses the classic Lumo
+  theme (`@StyleSheet(Lumo.STYLESHEET)`, no Aura
   import). Does NOT apply to apps using the Aura theme (`@StyleSheet(Aura.STYLESHEET)`,
   Vaadin's default from 25.0 onwards) — use the figma-to-aura-theme skill for those, since Aura
   properties don't map 1:1 from Lumo variable names. If the app's theme is unclear, check the

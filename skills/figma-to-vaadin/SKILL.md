@@ -1,8 +1,9 @@
 ---
 name: figma-to-vaadin
 description: >
-  Translate one Figma frame into Vaadin Flow (Java) UI code. This skill is one step of the
-  figma-to-vaadin-orchestrator workflow and is normally invoked by it, not directly: it assumes
+  Translate one Figma frame into Vaadin Flow (Java) UI code. This skill is phase 2 (UI
+  implementation) of the figma-to-vaadin-orchestrator workflow and is normally invoked by it,
+  rather than directly: it assumes
   the app's theme is already configured from the same Figma file, and it does not verify its own
   output. If someone asks for a Figma design to be implemented in Vaadin without that workflow
   having started, invoke figma-to-vaadin-orchestrator instead. Does NOT apply to React, HTML, web
@@ -74,9 +75,9 @@ what you write complements a component's own styling rather than duplicating or 
 emitted code back against your measurements in all three directions it describes, then compile.
 Compilation is the cheapest objective check available.
 
-Writing the code is where this skill stops. Confirming it against the design belongs to
-`figma-to-vaadin-orchestrator`, which runs verification once every frame is built — do not invoke
-a verification skill from here.
+Writing the code is where this skill stops. Confirming it against the design belongs to phase 3
+(verification), which `figma-to-vaadin-orchestrator` runs once every frame is built — do not
+invoke a verification skill from here.
 
 ## What this skill does and does not own
 

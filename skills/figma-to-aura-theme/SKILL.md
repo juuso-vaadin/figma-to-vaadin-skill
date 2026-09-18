@@ -1,6 +1,6 @@
 ---
 name: figma-to-aura-theme
-description: Map a Figma Aura design system to Vaadin Aura theme CSS configuration. Use when the user provides a Figma URL and wants to configure the Aura theme to match it. Triggers on requests like "set up Aura theme from Figma", "configure Aura to match my design", "generate Aura CSS from Figma", or when a Figma URL is combined with any Aura theming request. Applies when the target app uses the Aura theme (`@StyleSheet(Aura.STYLESHEET)`, Vaadin's default from 25.0 onwards) or has no theme configured yet. Does NOT apply to apps still on the classic Lumo theme (`@StyleSheet(Lumo.STYLESHEET)`, no Aura import) — use figma-to-lumo-theme for those instead.
+description: Map a Figma Aura design system to Vaadin Aura theme CSS configuration. This skill is phase 1 (theme configuration) of the figma-to-vaadin-orchestrator workflow, for projects on the Aura theme, and is normally invoked by it. Use it directly when the user provides a Figma URL and wants to configure only the Aura theme to match it. Triggers on requests like "set up Aura theme from Figma", "configure Aura to match my design", "generate Aura CSS from Figma", or when a Figma URL is combined with any Aura theming request. Applies when the target app uses the Aura theme (`@StyleSheet(Aura.STYLESHEET)`, Vaadin's default from 25.0 onwards) or has no theme configured yet. Does NOT apply to apps still on the classic Lumo theme (`@StyleSheet(Lumo.STYLESHEET)`, no Aura import) — use figma-to-lumo-theme for those instead.
 ---
 
 # Figma to Aura Theme
