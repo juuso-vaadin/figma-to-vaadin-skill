@@ -3,10 +3,10 @@ name: vaadin-visual-verification
 description: >
   Visually verify a Vaadin Flow view against the Figma design it was implemented from, using
   the Playwright MCP server to render the running app and a Figma screenshot as the reference.
-  Use this after implementing or changing a Vaadin view from a Figma design, when the user asks
-  to "verify against the design", "check it matches Figma", "visually verify the view", or as a
-  follow-up step after figma-to-vaadin. Produces a prioritized, actionable list of visual
-  discrepancies — it does not fix them. Does NOT apply to backend/business-logic testing or
+  This is the final phase of the figma-to-vaadin-orchestrator workflow and is normally invoked
+  by it. Also use it on its own when the user asks to "verify against the design", "check it
+  matches Figma", or "visually verify the view". Produces a prioritized, actionable list of
+  visual discrepancies — it does not fix them. Does NOT apply to backend/business-logic testing or
   general UI test suites — this is visual, design-fidelity verification only.
 compatibility: Requires the Playwright MCP server, Figma MCP, and a runnable instance of the target app
 ---
@@ -20,21 +20,34 @@ prioritized list of concrete visual differences — not a pass/fail, and not a v
 
 ## Inputs
 
-Needed from the caller (usually `figma-to-vaadin`, right after it finishes a view):
+When invoked by `figma-to-vaadin-orchestrator`, everything below comes from the workflow
+manifest at `.figma-to-vaadin/state.json` — read it first:
 
-- The Figma URL, or `fileKey` + `nodeId`, the view was implemented from
-- The route/URL of the implemented view in the app
-- How to start the app if it isn't already running (e.g. the Maven/Gradle wrapper command)
+| Needed | Manifest field |
+|---|---|
+| The Figma node the view was built from | `fileKey` + the target's `nodeId` |
+| The route of the implemented view | the target's `route`, appended to `appBaseUrl` |
+| How to start the app if it isn't running | `appStartCommand` |
 
-If any of these is missing, ask rather than guess at a route or reuse a stale screenshot.
+**Scope.** A node may be a region of an existing view rather than a whole screen, in which case
+targets share a `route`. Compare only what the node covers — the rest of the page came from other
+work, and its differences are not findings.
+
+Invoked without the manifest, ask the caller or the user for the same three. Ask rather than
+guess at a route or reuse a stale screenshot.
 
 ## Workflow
 
-### 1. Ensure the app is running
+### 1. Ensure the app is running *the current code*
 
-Check whether the target app already responds at the expected URL. If not, start it in the
-background (e.g. `./mvnw spring-boot:run`) and wait for the startup log line (e.g. `Started
-<Application> in ...`) before continuing — don't try to load the page before the server is up.
+A responding server is not necessarily serving the code on disk — Java changes need a rebuild and
+restart, and hotswap agents or devtools are never an assumption.
+
+- **Called by `figma-to-vaadin-orchestrator`** — it restarted the app already. Confirm the URL
+  responds and continue.
+- **Otherwise** — restart it yourself: stop what's running, start it with `appStartCommand` in
+  the background, and wait for the startup log line (e.g. `Started <Application> in ...`) before
+  loading any page.
 
 ### 2. Capture the reference
 
@@ -90,10 +103,10 @@ omitting the report.
 
 ## Boundaries
 
-- This skill only observes and reports — it does not edit code. Applying fixes is a separate
-  step (see `figma-to-vaadin`'s `verification: verify-and-fix` option, which applies exactly
-  one round of fixes from this report and does not automatically loop back into a second
-  verification pass).
+- This skill only observes and reports — it does not edit code. Applying fixes belongs to the
+  caller: `figma-to-vaadin-orchestrator` routes each finding to the workflow phase that owns
+  its fix, batches theme changes into a single revision, and decides what gets re-verified.
+  Report findings; don't fix them, and don't loop.
 - Don't rely on a single full-page screenshot alone — contrast and spacing issues are often
   only visible up close; take additional close-up screenshots of the specific regions where you
   suspect or find issues.

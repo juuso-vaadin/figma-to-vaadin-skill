@@ -1,13 +1,14 @@
 ---
 name: figma-to-vaadin
 description: >
-  Translate Figma designs into Vaadin Flow (Java) UI code. Use this skill whenever the user wants
-  to implement a Figma frame, screen, or component as Vaadin Java code — even if they just say
-  "implement this design", "generate Vaadin code from Figma", "convert this frame to Java", or
-  paste a Figma URL. Does NOT apply to React, HTML, web components, or other frontend frameworks
-  — only Vaadin Flow (Java). Does NOT apply to design-only tasks such as editing Figma files or
-  generating Figma components. Does NOT configure themes or visual design tokens — that is a
-  separate skill.
+  Translate one Figma frame into Vaadin Flow (Java) UI code. This skill is one step of the
+  figma-to-vaadin-orchestrator workflow and is normally invoked by it, not directly: it assumes
+  the app's theme is already configured from the same Figma file, and it does not verify its own
+  output. If someone asks for a Figma design to be implemented in Vaadin without that workflow
+  having started, invoke figma-to-vaadin-orchestrator instead. Does NOT apply to React, HTML, web
+  components, or other frontend frameworks — only Vaadin Flow (Java). Does NOT apply to
+  design-only tasks such as editing Figma files or generating Figma components. Does NOT
+  configure themes or visual design tokens — that is figma-to-aura-theme / figma-to-lumo-theme.
 compatibility: Requires a Figma MCP server and the Vaadin MCP server
 ---
 
@@ -23,8 +24,12 @@ to those documents, not replacements for them.
 **1. Learn the project.** Nothing about it should be assumed — read it out of the project each
 time:
 
-- **Vaadin version** — from the build file (`pom.xml` / `build.gradle`). Pass it to **every**
-  Vaadin MCP call, so you get the API surface this project actually compiles against.
+- **The workflow manifest** — `.figma-to-vaadin/state.json`, if the orchestrator wrote one. It
+  carries the Figma `fileKey`, this frame's `nodeId` and `route`, the Vaadin version and the
+  configured theme. Prefer it over re-deriving any of those.
+- **Vaadin version** — from the build file (`pom.xml` / `build.gradle`), or the manifest. Pass it
+  to **every** Vaadin MCP call, so you get the API surface this project actually compiles
+  against.
 - **The app's theme** — Lumo, Aura, or custom. Decides which variant constants apply, the
   default component styling, and which CSS custom properties are available.
 - **An existing view** — shows the base class views extend, the shared header/footer wrappers,
@@ -35,16 +40,22 @@ time:
 - **The icon set and the data source** — projects often add their own icon set, and existing
   records beat a parallel data model invented to fit the design.
 
-Code style, architecture and conventions come from the project's own guidelines — a `CLAUDE.md`
-or equivalent. This skill does not restate them: how to structure a view, when to split out
-reusable components, how to name things and how to shape sample data are decisions the project
-already makes. Read them there and follow them.
+Code style, architecture and conventions come from the project's own agent guidelines —
+`AGENTS.md`, or a tool-specific equivalent such as `CLAUDE.md`. This skill does not restate them: 
+how to structure a view, when to split out reusable components, how to name things and how to shape 
+sample data are decisions the project already makes. Read them there and follow them.
 
-**2. Load `figma-design-to-code`, then decompose the frame up front.** Full-screen frames
-truncate, and `get_design_context` can return an incomplete answer without saying so. Get the
-region tree first, then request context **per region**. Don't discover truncation late and fall
-back to metadata alone — that carries geometry with no styling, so the implementation degrades to
-boxes in roughly the right places.
+**2. Load `figma-design-to-code`, then decompose the frame up front.** It is an MCP resource
+served by the Figma MCP server, not a skill installed in this project. Read it through your client's
+MCP resource reader at `skill://figma/figma-design-to-code/SKILL.md` on the Figma MCP server.
+If your client cannot read MCP resources, say so and continue — the steps below still apply.
+
+Full-screen frames truncate, and `get_design_context` can return an incomplete answer without
+saying so. Get the region tree first, then request context **per region**. Don't discover
+truncation late and fall back to metadata alone — that carries geometry with no styling, so the
+implementation degrades to boxes in roughly the right places. Don't fall back to the screenshot
+alone either while `get_design_context` can still answer for a region: the screenshot shows what
+a thing looks like, not what it is made of.
 
 **3. Measure the design — read `references/fidelity.md` first.** It sets out which properties to
 take from the returned code and which from the screenshot, and which details are easiest to lose
@@ -63,17 +74,17 @@ what you write complements a component's own styling rather than duplicating or 
 emitted code back against your measurements in all three directions it describes, then compile.
 Compilation is the cheapest objective check available.
 
-**7. Hand off verification.** Writing the code is this skill's job; confirming it against the
-design is not. If the project has a visual-verification skill, invoke it with the Figma reference
-and the route, and present its findings rather than acting on them unprompted. Agree with the
-user first whether you should also apply a round of fixes.
+Writing the code is where this skill stops. Confirming it against the design belongs to
+`figma-to-vaadin-orchestrator`, which runs verification once every frame is built — do not invoke
+a verification skill from here.
 
 ## What this skill does and does not own
 
 The Figma side already has a skill: `figma-design-to-code`, which the Figma MCP requires you to
-load before calling `get_design_context`. It owns fetching design context, treating the returned
-code as a reference rather than final, the hint priority order (Code Connect → component docs →
-annotations → design tokens → raw values), reusing what the project has, and asset fidelity.
+load before calling `get_design_context` — read it as an MCP resource, per step 2. It owns
+fetching design context, treating the returned code as a reference rather than final, the hint
+priority order (Code Connect → component docs → annotations → design tokens → raw values),
+reusing what the project has, and asset fidelity.
 **Follow it, and don't restate it here.**
 
 This skill adds only what that skill cannot know: how Vaadin behaves, and how to find out what

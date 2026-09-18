@@ -52,7 +52,19 @@ Variables to capture from each mode:
 | Font variable (e.g. `lumo-font-family`) | `--aura-font-family` | — |
 | Font size variable (e.g. `lumo-font-size-m`) | `--aura-base-font-size` | — |
 
-> **Note:** The Figma Aura design system may label some variables with `lumo-` prefixes (e.g. `lumo-font-family`, `lumo-font-size-m`). These are equivalent to their Aura counterparts and should be mapped to Aura CSS properties. Ignore any `lumo-` variables that have no Aura equivalent.
+> **Note:** The Figma Aura design system may label some variables with `lumo-` prefixes (e.g. `lumo-font-family`, `lumo-font-size-m`). These are equivalent to their Aura counterparts and should be mapped to Aura CSS properties. A `lumo-` variable with no Aura equivalent is kept as a custom property per the rule below, not dropped.
+
+#### Variables that don't match an Aura name
+Design files are not always built from the Vaadin library, and a variable with an unfamiliar name
+is still part of the design system. Handle every extracted variable — none are dropped:
+
+1. **An equivalent Aura property exists** — map it, even if the names differ. Use the Vaadin
+   MCP's `get_theme_css_properties` (theme: `"aura"`) to check before concluding there is none.
+2. **No equivalent** — declare it as a custom property in the same global stylesheet, keeping the
+   design's own name (e.g. `--brand-surface-raised: #f4f6f9;`). Views then reference it by name
+   instead of hard-coding the value, and it stays in one place when the design changes.
+3. **No variables in the file at all** — stop and ask the user how to proceed. Don't infer theme
+   values from screenshots.
 
 ---
 
