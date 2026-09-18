@@ -70,31 +70,39 @@ is still part of the design system. Handle every extracted variable — none are
 
 ### Step 2: Map Figma Variables to Aura Properties
 
-Aura uses named colors from a predefined list — do not use raw hex values from Figma unless no named color matches closely (see color matching below).
+Aura has a seven-color palette. Prefer a palette color when the Figma value is close to one — it
+keeps every accent-derived color coherent. When nothing is close, set the Figma value directly;
+Aura derives text, border and surface variants from whatever you give it. See
+[Color Matching Reference](#color-matching-reference) below.
 
 #### Accent Color
 
-The `aura-accent-color` variable from Figma is the **light mode** accent. Aura requires separate light and dark accent values.
+The `aura-accent-color` variable from Figma is the **light mode** accent. Aura takes separate
+light and dark accent values, both defaulting to `var(--aura-blue)`.
 
-1. Compare the light mode hex to the Aura **Light Accent Colors** table in `property-values.md`
-2. Find the closest named color by hue (keep the same color family — blue stays blue, green stays green)
-3. Use the **paired dark variant** of the same named color for `--aura-accent-color-dark`
+1. Compare the light mode hex to the palette in [Color Matching Reference](#color-matching-reference)
+2. Close to a palette color (same hue family — blue stays blue, green stays green)? Reference it by
+   name rather than pasting the hex
+3. Nothing close? Set the Figma hex directly
+4. Set the dark accent as well. There is no "paired dark variant" of a palette color — use the
+   accent the Figma dark mode defines, or reuse the light value when the file has only one mode
 
 ```css
-/* Example: Figma aura-accent-color = #3266e4 → closest named = Default blue */
---aura-accent-color-light: #3266e4;   /* or omit if it IS the default */
---aura-accent-color-dark: #3266e4;    /* paired dark variant */
+/* Example: Figma aura-accent-color = #16a34a → closest palette color = green */
+--aura-accent-color-light: var(--aura-green);
+--aura-accent-color-dark: var(--aura-green);
 ```
 
-Only set these if they differ from the Aura defaults (`#3266e4` for both).
+Only set these if they differ from the Aura default (`var(--aura-blue)` for both).
 
 #### Background Color
 
-The `aura-background-color` variable from Figma is the **light mode** background. Aura requires separate light and dark background values.
+The `aura-background-color` variable from Figma is the **light mode** background. Aura takes
+separate light and dark background values.
 
-1. Compare the light mode hex to the Aura **Light Background Colors** table in `property-values.md`
-2. Find the closest named background by hue and tone
-3. Use the **paired dark variant** of the same named background for dark mode
+There is no named background list to match against — set the Figma values directly, one per mode.
+These two properties matter more than any other color: Aura computes the neutral, text, border and
+surface colors from them.
 
 If the background is tinted by the accent color (vibrant/colorful design), use the Accent background formula:
 ```css
@@ -102,33 +110,42 @@ If the background is tinted by the accent color (vibrant/colorful design), use t
 --aura-background-color-dark: oklch(from var(--aura-accent-color-dark) 0.18 calc(c * 0.3) h);
 ```
 
-Only set these if they differ from the Aura defaults (`#F4F5F7` / `#151922`).
+Only set these if they differ from the Aura defaults (`oklch(0.95 0.005 248)` light /
+`oklch(0.2 0.01 260)` dark).
 
 #### Font Family
 
-Map the font variable to `--aura-font-family`. Prefer fonts from the curated list in `property-values.md`. Add the corresponding Google Fonts `@import` at the top of the CSS file.
+Map the font variable to `--aura-font-family`. Aura bundles only Instrument Sans (its default), so
+any other font has to be loaded: add the Google Fonts `@import` at the top of the CSS file and keep
+a fallback stack.
 
 ```css
-/* Figma: lumo-font-family = "Instrument Sans" → not in curated list → omit or use closest */
-/* Figma: lumo-font-family = "Inter" → use Inter */
+/* Figma: lumo-font-family = "Inter" */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
 --aura-font-family: 'Inter', var(--aura-font-family-system);
 ```
 
-If the font from Figma is not in the curated list, omit `--aura-font-family` (defaults to Instrument Sans).
+If Figma specifies Instrument Sans, the system font stack, or no font at all, omit
+`--aura-font-family` — the default (`--aura-font-family-instrument-sans`) already covers it.
 
 #### Font Size
 
-The Figma font-size-m variable maps to `--aura-base-font-size`. Use the closest value from the allowed set: `13`, `14` (default), `15`, `16`.
+The Figma font-size-m variable maps to `--aura-base-font-size`: a unitless number of pixels
+(`15`, not `15px`). Aura computes the xs–xl font sizes from it, so round to a whole pixel.
 
 Only set if it differs from the default (`14`).
 
 #### User Colors
 
-`vaadin-user-color-0` through `vaadin-user-color-9` map directly. Only set values that differ from the Aura defaults. If Figma has fewer than 10 user colors defined, only set the ones present.
+`vaadin-user-color-0` through `vaadin-user-color-9` map directly — they are base style properties,
+so they carry the same defaults in every theme. Only set the ones that differ, and if Figma defines
+fewer than 10, only set those present. Check the defaults with `get_theme_css_properties`
+(`theme: "base"`) rather than assuming.
 
 ```css
 html {
-  --vaadin-user-color-0: #3266e4;
+  --vaadin-user-color-0: #7f3fbf;
   --vaadin-user-color-1: #00d2cd;
   /* ... */
 }
@@ -155,9 +172,16 @@ These Aura properties have no corresponding Figma variable — infer them visual
 Call `get_design_context` on a representative frame (preferably an application shell or dashboard view). Use the screenshot and code hints to infer the properties listed above.
 
 Look for:
-- **Border radius:** Check button, input, and card corner rounding. Map to Aura's discrete values (`-1`, `0`, `3`, `4`, `7`)
-- **Density:** Check component heights and spacing. Map to `12` (compact), `16` (default), `20` (spacious)
-- **Surface level:** Check if cards/panels appear elevated, flat, or deeply layered. Map to `-0.5`, `1`, or `2`
+- **Border radius:** Check button, input, and card corner rounding. `--aura-base-radius` is a
+  unitless number, default `3`, with sensible values from `0` (mostly square) to `10` (very round).
+  Radius `0` does not square every corner — to remove all rounding, override the base style radius
+  properties (`--vaadin-radius-s/m/l`) instead
+- **Density:** Check component heights and spacing. `--aura-base-size` is a unitless number,
+  default `16`, suitable range 12–24 — prefer multiples of 4: `12` (compact), `16` (default),
+  `20`/`24` (spacious)
+- **Surface level:** Check if cards/panels appear elevated, flat, or deeply layered.
+  `--aura-surface-level` accepts any number, default `1`; negative values look recessed, `0` matches
+  the background, higher values look more elevated
 - **App layout inset:** Check if the main content area has a gap/margin from the viewport edge. `0px` = no inset
 - **Color scheme for nav vs content:** If the side nav is dark and content is light, set `--aura-content-color-scheme: light` alongside `color-scheme: dark`
 
@@ -193,11 +217,12 @@ html {
   /* Color scheme */
   color-scheme: light dark;
 
-  /* Accent colors — only if different from default #3266e4 */
-  --aura-accent-color-light: #009966;
-  --aura-accent-color-dark: #34D399;
+  /* Accent colors — only if different from the default var(--aura-blue) */
+  --aura-accent-color-light: var(--aura-green);
+  --aura-accent-color-dark: var(--aura-green);
 
-  /* Background — only if different from defaults */
+  /* Background — only if different from the defaults
+     oklch(0.95 0.005 248) / oklch(0.2 0.01 260) */
   --aura-background-color-light: #ffffff;
   --aura-background-color-dark: #18181b;
 
@@ -205,14 +230,15 @@ html {
   --aura-font-family: 'Inter', var(--aura-font-family-system);
   --aura-base-font-size: 15;
 
-  /* Layout and visual style — only non-defaults */
-  --aura-base-radius: 4;
-  --aura-base-size: 16;
-  --aura-surface-level: 1;
+  /* Layout and visual style — only non-defaults
+     (radius defaults to 3, base size to 16, surface level to 1) */
+  --aura-base-radius: 6;
+  --aura-base-size: 20;
+  --aura-surface-level: 2;
   --aura-app-layout-inset: 0px;
 
   /* User colors — only if customized */
-  --vaadin-user-color-0: #3266e4;
+  --vaadin-user-color-0: #7f3fbf;
   --vaadin-user-color-1: #00d2cd;
 }
 
@@ -235,25 +261,30 @@ html {
 
 ## Color Matching Reference
 
-When matching a Figma hex to a named Aura color, compare hues:
+Aura's palette is seven colors — neutral plus six saturated ones — each a single `oklch` value from
+which Aura computes the text, border and surface variants. There are no 50–900 scales, and no
+separate light and dark variants of a palette color.
 
-| Hue range | Named Aura Color |
-|---|---|
-| Red ~0° | Red |
-| Orange ~25° | Orange |
-| Amber/Yellow ~40-55° | Amber / Yellow |
-| Yellow-Green ~75° | Lime |
-| Green ~130-150° | Green / Emerald |
-| Teal ~170° | Teal |
-| Cyan ~185° | Cyan |
-| Sky ~200° | Sky |
-| Blue ~215-225° | Blue (Default) |
-| Indigo ~240° | Indigo |
-| Violet ~265° | Violet |
-| Purple ~280° | Purple |
-| Fuchsia ~295° | Fuchsia |
-| Pink ~320° | Pink |
-| Rose ~345° | Rose |
-| Neutral / Black/White | Neutral |
+| Palette property | Default value | oklch hue |
+|---|---|---|
+| `--aura-red` | `oklch(0.59 0.2 25)` | 25 |
+| `--aura-orange` | `oklch(0.61 0.35 87)` | 87 |
+| `--aura-yellow` | `oklch(0.89 0.3 98)` | 98 |
+| `--aura-green` | `oklch(0.6 0.2 155)` | 155 |
+| `--aura-blue` | `oklch(0.55 0.2 264)` | 264 |
+| `--aura-purple` | `oklch(0.58 0.22 290)` | 290 |
+| `--aura-neutral-light` / `--aura-neutral-dark` | computed from `--aura-background-color-light` / `-dark` | — |
 
-Always pair the light and dark variants of the **same named color**.
+These are **oklch** hues, not HSL ones — they don't line up with the hue angle a color picker
+reports. Convert the Figma hex to `oklch` before comparing, then check that lightness and chroma
+land in a similar range too.
+
+Matching is a preference, not a rule:
+- **Close to a palette color** → reference it (`var(--aura-green)`) so accent-derived colors stay
+  coherent
+- **Not close to any** → use the Figma value directly; Aura derives the rest either way
+- **The brand color belongs to the design system** → redefine the palette property itself
+  (`--aura-green: <brand value>;`), which recolors everything built on it
+
+Confirm these defaults with the Vaadin MCP's `get_theme_css_properties` (`theme: "aura"`) for the
+app's Vaadin version rather than assuming they hold across versions.
