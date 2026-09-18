@@ -46,7 +46,10 @@ every rule and separator in the design.
   Scope the override under the view's own class with a child combinator so it wins on specificity
   without leaking into other views. Awkwardness is not a reason to drop a line the design has.
 
-## When the design's scale exceeds the theme's
+## Tokens first, literals when nothing fits
+
+Themes define scales for spacing, radius and type, not only colors. Look a value up in the theme's
+scale before writing it as a number.
 
 A design tokenised for a different theme routinely asks for values the app's theme cannot
 express — a type scale reaching past the theme's ceiling is the common case. Snapping such a
@@ -61,9 +64,6 @@ become the theme's ceiling, and two visibly different levels render identically.
 round down to the largest token. Then **report it**, so the gap is a decision rather than an
 accident — a short "these values have no token equivalent in the current theme" note is the
 deliverable, not a nuisance.
-
-This is the one place a hard-coded value beats a token. It is not licence to hard-code colors or
-spacing that *do* have tokens.
 
 ## Implement what the design contains — and nothing else
 
@@ -94,6 +94,8 @@ wrong view. Check all three directions:
 - **Every declaration traces to something the design showed.** Padding the frame does not have is
   as wrong as padding it has and you dropped, and harder to notice. If you cannot point to the
   measurement behind a declaration, delete it.
+- **Every hard-coded number is one token not matched.** Spacing, radius and type scales are tokens
+  too — check the scale before leaving a number in.
 
 Then re-read the per-region measurements from the start of the job and confirm each padding, gap,
 border and size actually appears — in the layout API where one covers it, in CSS otherwise.
