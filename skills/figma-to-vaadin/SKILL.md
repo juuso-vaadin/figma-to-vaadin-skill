@@ -99,10 +99,15 @@ must translate.
 Vaadin's API surface, variants, custom properties and feature flags evolve between versions, so
 recall is the least reliable input available.
 
-**Never go looking in `~/.m2`, and never extract, decompile or grep a dependency jar.** Everything
-those archives hold about a component's API is in the Vaadin documentation, one call away and
-already written for the version you ask about. Searching a local repository for it is slow, hard
-to read, easy to misread, and unnecessary.
+**Stay inside this project.** Don't go looking for system files, don't extract or grep a 
+dependency jar, and don't go searching the filesystem for a copy.
+Everything those archives hold about a component's API is in the Vaadin documentation, one call
+away and already written for the version you ask about.
+
+**For a theme's real defaults, ask the running app.** It serves its own theme stylesheet at the
+path its `@StyleSheet` names — `curl <appBaseUrl>/aura/aura.css` — so the answer is always this
+project's version. With a page open, `getComputedStyle()` gives the value in effect at a given
+element even if the theme reassigns styles on components themselves.
 
 Match the question to its source:
 
