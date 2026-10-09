@@ -2,9 +2,11 @@
 name: figma-to-lumo-theme
 description: >
   Map Figma design tokens to Lumo CSS variables by extracting tokens, categorizing them, and
-  generating CSS declarations in the styles.css file with only non-default values. Use this
-  skill whenever the user wants to apply Figma design tokens/colors/typography to a Vaadin
-  app's theme and the app uses the classic Lumo theme (`@StyleSheet(Lumo.STYLESHEET)`, no Aura
+  generating CSS declarations in the styles.css file with only non-default values. This skill is
+  phase 1 (theme configuration) of the figma-to-vaadin-orchestrator workflow, for projects on the
+  Lumo theme, and is normally invoked by it. Use it directly whenever the user wants to apply
+  Figma design tokens/colors/typography to a Vaadin app's theme and the app uses the classic Lumo
+  theme (`@StyleSheet(Lumo.STYLESHEET)`, no Aura
   import). Does NOT apply to apps using the Aura theme (`@StyleSheet(Aura.STYLESHEET)`,
   Vaadin's default from 25.0 onwards) — use the figma-to-aura-theme skill for those, since Aura
   properties don't map 1:1 from Lumo variable names. If the app's theme is unclear, check the
@@ -93,6 +95,18 @@ Many component variables are directly available in Figma:
 - `vaadin-input-field-border-color` → `--vaadin-input-field-border-color`
 - `vaadin-input-field-border-width` → `--vaadin-input-field-border-width`
 - Use the Vaadin MCP's `get_theme_css_properties` (theme: `"lumo"`) for additional component variables
+
+#### Variables that don't match a Lumo name
+Design files are not always built from the Vaadin library, and a variable with an unfamiliar name
+is still part of the design system. Handle every extracted variable — none are dropped:
+
+1. **An equivalent Lumo property exists** — map it, even if the names differ. Use the Vaadin
+   MCP's `get_theme_css_properties` (theme: `"lumo"`) to check before concluding there is none.
+2. **No equivalent** — declare it as a custom property in the same global stylesheet, keeping the
+   design's own name (e.g. `--brand-surface-raised: #f4f6f9;`). Views then reference it by name
+   instead of hard-coding the value, and it stays in one place when the design changes.
+3. **No variables in the file at all** — stop and ask the user how to proceed. Don't infer theme
+   values from screenshots.
 
 ### Step 3: Extract Component Styles From Figma with `get_design_context`
 - Contains the most detailed component information

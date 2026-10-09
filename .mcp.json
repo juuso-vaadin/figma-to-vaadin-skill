@@ -1,5 +1,5 @@
 {
-	"servers": {
+	"mcpServers": {
         "Vaadin MCP": {
             "type": "http",
             "url": "https://mcp.vaadin.com/docs"
@@ -8,10 +8,12 @@
        		"type": "http",
        		"url": "https://mcp.figma.com/mcp"
     	},
-		"Figma MCP desktop": {
-       		"type": "http",
-       		"url": "http://127.0.0.1:3845/mcp"
-    	}
+		"playwright": {
+			"command": "npx",
+			"args": [
+				"@playwright/mcp@latest"
+			]
+		}
 	},
 	"inputs": []
 }
